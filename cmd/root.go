@@ -20,7 +20,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "asyncker",
 	Short: "Tool for executing commands asynchronously.",
-	Long: `asyncker is a cross-platform CLI written in Go for
+	Long: `asyncker is a CLI written in Go for
 executing and managing commands asynchronously.`,
 	SilenceUsage: true,
 	CompletionOptions: cobra.CompletionOptions{
