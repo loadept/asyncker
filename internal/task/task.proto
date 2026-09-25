@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package task;
+
+option go_package = "loadept.com/pkg/asyncker/internal/task";
+
+import "google/protobuf/empty.proto";
+
+message Task {
+    int64 id = 1;
+    string name = 2;
+    string command = 3;
+    repeated string args = 4;
+    int64 pid = 5;
+    bool status = 6;
+}
+
+message InvokeTaskRequest {
+    string command = 1;
+    repeated string args = 2;
+    optional string name = 3;
+}
+
+message InvokeTaskResponse {
+    Task task = 1;
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+}
+
+service TaskService {
+  rpc InvokeTask (InvokeTaskRequest) returns (InvokeTaskResponse);
+  rpc ListTasks (google.protobuf.Empty) returns (ListTasksResponse);
+}

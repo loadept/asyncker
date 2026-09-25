@@ -47,14 +47,14 @@ var execCmd = &cobra.Command{
 			stdErr = outFile
 		} else {
 			outFileName := fmt.Sprintf("%s_out.log", cmdLine.Command)
-			outFilePath := filepath.Join(logsDirPath, outFileName)
+			outFilePath := filepath.Join(logsPath, outFileName)
 			outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 			if err != nil {
 				return err
 			}
 
 			errFileName := fmt.Sprintf("%s_err.log", cmdLine.Command)
-			errFilePath := filepath.Join(logsDirPath, errFileName)
+			errFilePath := filepath.Join(logsPath, errFileName)
 			errFile, err := os.OpenFile(errFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 			if err != nil {
 				return err
@@ -69,7 +69,7 @@ var execCmd = &cobra.Command{
 			return fmt.Errorf("execute command: %w", err)
 		}
 
-		tasks, err := LoadTasks(tasksFilePath)
+		tasks, err := LoadTasks(tasksPath)
 		if err != nil {
 			return fmt.Errorf("load tasks: %w", err)
 		}
@@ -90,7 +90,7 @@ var execCmd = &cobra.Command{
 		}
 		tasks = append(tasks, newTask)
 
-		if err := SaveTasks(tasksFilePath, tasks); err != nil {
+		if err := SaveTasks(tasksPath, tasks); err != nil {
 			return fmt.Errorf("save task: %w", err)
 		}
 

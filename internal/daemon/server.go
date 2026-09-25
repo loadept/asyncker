@@ -2,7 +2,7 @@ package daemon
 
 import (
 	context "context"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -11,14 +11,19 @@ import (
 
 type DaemonServer struct {
 	UnimplementedDaemonServiceServer
-	downCh    chan struct{}
+	logger    *slog.Logger
+	downCh    chan<- struct{}
 	startTime time.Time
 }
 
+func NewDaemonServer(logger *slog.Logger, downCh chan<- struct{}) *DaemonServer {
+	return new(DaemonServer{logger: logger, downCh: downCh, startTime: time.Now()})
+}
+
 func (s *DaemonServer) StopDaemon(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
-	log.Println("Cositas")
 	select {
 	case s.downCh <- struct{}{}:
+		s.logger.Info("RPC call received to stop the server")
 	default:
 	}
 	return &emptypb.Empty{}, nil

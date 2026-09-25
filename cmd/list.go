@@ -17,7 +17,7 @@ var listCmd = &cobra.Command{
 	Use:   "list [flags]",
 	Short: "List registered tasks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tasks, err := LoadTasks(tasksFilePath)
+		tasks, err := LoadTasks(tasksPath)
 		if err != nil {
 			return fmt.Errorf("listing tasks: %w", err)
 		}

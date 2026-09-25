@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -11,7 +12,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"loadept.com/pkg/asyncker/internal/daemon"
+	"loadept.com/pkg/asyncker/internal/task"
 )
 
 var up, down, status bool
@@ -78,14 +81,32 @@ var daemonCmd = &cobra.Command{
 				return fmt.Errorf("remove orphan socket: %w", err)
 			}
 
-			socket := daemon.NewSockerManager(socketPath)
+			logFile, err := os.OpenFile(daemonLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+			if err != nil {
+				return fmt.Errorf("open daemon log file: %w", err)
+			}
+			defer logFile.Close()
 
-			fmt.Println("Daemon running successfully")
-			stopCh, errCh, err := socket.StartDaemon()
+			logger := slog.New(slog.NewJSONHandler(logFile, &slog.HandlerOptions{
+				Level: slog.LevelDebug,
+			}))
+
+			socket := daemon.NewDaemonManager(socketPath)
+
+			stopCh := make(chan struct{}, 1)
+			errCh, err := socket.StartDaemon(
+				func(s *grpc.Server) {
+					daemon.RegisterDaemonServiceServer(s, daemon.NewDaemonServer(logger, stopCh))
+				},
+				func(s *grpc.Server) {
+					task.RegisterTaskServiceServer(s, task.NewTaskServer(logger, logsPath))
+				},
+			)
 			if err != nil {
 				return fmt.Errorf("run daemon: %w", err)
 			}
 
+			fmt.Println("Daemon running successfully")
 			shutdown, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 			defer stop()
 

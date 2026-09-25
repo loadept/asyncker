@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	configDirPath string
-	logsDirPath   string
+	configPath    string
+	logsPath      string
+	daemonLogFile string
 	socketPath    string
-	tasksFilePath string
+	tasksPath     string
 	selfPath      string
 )
 
@@ -47,23 +48,19 @@ func initConfig() {
 		return
 	}
 
-	configDirName := ".asyncker"
-	logsDirName := "logs"
-	tasksFileName := "tasks.gob"
-	sockerName := "daemon.sock"
+	configPath = filepath.Join(home, ".asyncker")
+	logsPath = filepath.Join(configPath, "logs")
+	socketPath = filepath.Join(configPath, "daemon.sock")
+	tasksPath = filepath.Join(configPath, "tasks.gob")
+	daemonLogFile = filepath.Join(logsPath, "daemon.log")
 
-	configDirPath = filepath.Join(home, configDirName)
-	logsDirPath = filepath.Join(configDirPath, logsDirName)
-	socketPath = filepath.Join(configDirPath, sockerName)
-	tasksFilePath = filepath.Join(configDirPath, tasksFileName)
-
-	if err := os.MkdirAll(logsDirPath, 0o755); err != nil {
+	if err := os.MkdirAll(logsPath, 0o755); err != nil {
 		fmt.Printf("create project directory: %v\n", err)
 		return
 	}
 
-	if _, err := os.Stat(tasksFilePath); os.IsNotExist(err) {
-		file, err := os.OpenFile(tasksFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if _, err := os.Stat(tasksPath); os.IsNotExist(err) {
+		file, err := os.OpenFile(tasksPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		if err != nil {
 			fmt.Printf("create project file: %v\n", err)
 			return
