@@ -6,13 +6,19 @@ option go_package = "loadept.com/pkg/asyncker/internal/task";
 
 import "google/protobuf/empty.proto";
 
+enum TaskStatus {
+    TASK_STATUS_RUNNING     = 0;
+    TASK_STATUS_SUCCEEDED   = 1;
+    TASK_STATUS_FAILED      = 2;
+}
+
 message Task {
-    int64 id = 1;
     string name = 2;
     string command = 3;
     repeated string args = 4;
     int64 pid = 5;
-    bool status = 6;
+    TaskStatus status = 6;
+    int64 executed_at = 7;
 }
 
 message InvokeTaskRequest {
@@ -26,10 +32,10 @@ message InvokeTaskResponse {
 }
 
 message ListTasksResponse {
-  repeated Task tasks = 1;
+    repeated Task tasks = 1;
 }
 
 service TaskService {
-  rpc InvokeTask (InvokeTaskRequest) returns (InvokeTaskResponse);
-  rpc ListTasks (google.protobuf.Empty) returns (ListTasksResponse);
+    rpc InvokeTask (InvokeTaskRequest) returns (InvokeTaskResponse);
+    rpc ListTasks (google.protobuf.Empty) returns (ListTasksResponse);
 }
