@@ -1,14 +1,16 @@
 package cmd
 
 import (
-	"encoding/json/v2"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"loadept.com/pkg/asyncker/internal/task"
 )
 
 var format string
@@ -17,24 +19,40 @@ var listCmd = &cobra.Command{
 	Use:   "list [flags]",
 	Short: "List registered tasks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tasks, err := LoadTasks(tasksPath)
+		conn, err := net.DialTimeout("unix", socketPath, 1*time.Second)
+		if err != nil {
+			fmt.Println("No daemon is running")
+			if down {
+				os.Remove(socketPath)
+			}
+			return nil
+		}
+		conn.Close()
+
+		client, err := task.NewClient(socketPath)
+		if err != nil {
+			return fmt.Errorf("create task client: %w", err)
+		}
+		defer client.Close()
+
+		tasks, err := client.ListTasks(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("listing tasks: %w", err)
 		}
 
 		if format == "" {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 5, ' ', 0)
-			fmt.Fprintln(w, "ID\tName\tPID\tCmdLine\tExecutedAt")
+			fmt.Fprintln(w, "Name\tPID\tCmdLine\tStatus\tExecutedAt")
 			for _, t := range tasks {
 				fmt.Fprintf(
 					w,
-					"%d\t%s\t%d\t%s %s\t%s\n",
-					t.ID,
-					t.Name,
-					t.PID,
-					t.CmdLine.Command,
-					strings.Join(t.CmdLine.Args, " "),
-					time.Unix(t.ExecutedAt, 0).Format("2006-01-02 15:04:05"),
+					"%s\t%d\t%s %s\t%s\t%s\n",
+					t.GetName(),
+					t.GetPid(),
+					t.GetCommand(),
+					strings.Join(t.GetArgs(), " "),
+					t.GetStatus(),
+					time.Unix(t.GetExecutedAt(), 0).Format("2006-01-02 15:04:05"),
 				)
 			}
 			w.Flush()
@@ -44,7 +62,7 @@ var listCmd = &cobra.Command{
 		switch format {
 		case "json":
 			for _, t := range tasks {
-				out, err := json.Marshal(t)
+				out, err := protojson.Marshal(t)
 				if err != nil {
 					return fmt.Errorf("formating tasks: %w", err)
 				}

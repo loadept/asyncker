@@ -52,7 +52,7 @@ func initConfig() {
 	logsPath = filepath.Join(configPath, "logs")
 	socketPath = filepath.Join(configPath, "daemon.sock")
 	tasksPath = filepath.Join(configPath, "tasks.gob")
-	daemonLogFile = filepath.Join(logsPath, "daemon.log")
+	daemonLogFile = filepath.Join(configPath, "daemon.log")
 
 	if err := os.MkdirAll(logsPath, 0o755); err != nil {
 		fmt.Printf("create project directory: %v\n", err)
