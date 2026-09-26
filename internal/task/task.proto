@@ -9,7 +9,8 @@ import "google/protobuf/empty.proto";
 enum TaskStatus {
     TASK_STATUS_RUNNING     = 0;
     TASK_STATUS_SUCCEEDED   = 1;
-    TASK_STATUS_FAILED      = 2;
+    TASK_STATUS_CANCELLED   = 2;
+    TASK_STATUS_FAILED      = 3;
 }
 
 message Task {
@@ -25,6 +26,8 @@ message InvokeTaskRequest {
     string command = 1;
     repeated string args = 2;
     optional string name = 3;
+    string working_dir = 4;
+    map<string, string> env_vars = 5;
 }
 
 message InvokeTaskResponse {
@@ -35,7 +38,17 @@ message ListTasksResponse {
     repeated Task tasks = 1;
 }
 
+message StopTaskRequest {
+  string name = 1;
+}
+
+message StopTaskResponse {
+  bool stopped = 1;
+  string detail = 2;
+}
+
 service TaskService {
     rpc InvokeTask (InvokeTaskRequest) returns (InvokeTaskResponse);
     rpc ListTasks (google.protobuf.Empty) returns (ListTasksResponse);
+    rpc StopTask (StopTaskRequest) returns (StopTaskResponse);
 }

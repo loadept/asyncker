@@ -27,7 +27,8 @@ type TaskStatus int32
 const (
 	TaskStatus_TASK_STATUS_RUNNING   TaskStatus = 0
 	TaskStatus_TASK_STATUS_SUCCEEDED TaskStatus = 1
-	TaskStatus_TASK_STATUS_FAILED    TaskStatus = 2
+	TaskStatus_TASK_STATUS_CANCELLED TaskStatus = 2
+	TaskStatus_TASK_STATUS_FAILED    TaskStatus = 3
 )
 
 // Enum value maps for TaskStatus.
@@ -35,12 +36,14 @@ var (
 	TaskStatus_name = map[int32]string{
 		0: "TASK_STATUS_RUNNING",
 		1: "TASK_STATUS_SUCCEEDED",
-		2: "TASK_STATUS_FAILED",
+		2: "TASK_STATUS_CANCELLED",
+		3: "TASK_STATUS_FAILED",
 	}
 	TaskStatus_value = map[string]int32{
 		"TASK_STATUS_RUNNING":   0,
 		"TASK_STATUS_SUCCEEDED": 1,
-		"TASK_STATUS_FAILED":    2,
+		"TASK_STATUS_CANCELLED": 2,
+		"TASK_STATUS_FAILED":    3,
 	}
 )
 
@@ -160,6 +163,8 @@ type InvokeTaskRequest struct {
 	Command       string                 `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
 	Args          []string               `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty"`
 	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	WorkingDir    string                 `protobuf:"bytes,4,opt,name=working_dir,json=workingDir,proto3" json:"working_dir,omitempty"`
+	EnvVars       map[string]string      `protobuf:"bytes,5,rep,name=env_vars,json=envVars,proto3" json:"env_vars,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -213,6 +218,20 @@ func (x *InvokeTaskRequest) GetName() string {
 		return *x.Name
 	}
 	return ""
+}
+
+func (x *InvokeTaskRequest) GetWorkingDir() string {
+	if x != nil {
+		return x.WorkingDir
+	}
+	return ""
+}
+
+func (x *InvokeTaskRequest) GetEnvVars() map[string]string {
+	if x != nil {
+		return x.EnvVars
+	}
+	return nil
 }
 
 type InvokeTaskResponse struct {
@@ -303,6 +322,102 @@ func (x *ListTasksResponse) GetTasks() []*Task {
 	return nil
 }
 
+type StopTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StopTaskRequest) Reset() {
+	*x = StopTaskRequest{}
+	mi := &file_task_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StopTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopTaskRequest) ProtoMessage() {}
+
+func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopTaskRequest.ProtoReflect.Descriptor instead.
+func (*StopTaskRequest) Descriptor() ([]byte, []int) {
+	return file_task_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StopTaskRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type StopTaskResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Stopped       bool                   `protobuf:"varint,1,opt,name=stopped,proto3" json:"stopped,omitempty"`
+	Detail        string                 `protobuf:"bytes,2,opt,name=detail,proto3" json:"detail,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StopTaskResponse) Reset() {
+	*x = StopTaskResponse{}
+	mi := &file_task_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StopTaskResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopTaskResponse) ProtoMessage() {}
+
+func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_task_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopTaskResponse.ProtoReflect.Descriptor instead.
+func (*StopTaskResponse) Descriptor() ([]byte, []int) {
+	return file_task_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *StopTaskResponse) GetStopped() bool {
+	if x != nil {
+		return x.Stopped
+	}
+	return false
+}
+
+func (x *StopTaskResponse) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
 var File_task_proto protoreflect.FileDescriptor
 
 const file_task_proto_rawDesc = "" +
@@ -316,27 +431,40 @@ const file_task_proto_rawDesc = "" +
 	"\x03pid\x18\x05 \x01(\x03R\x03pid\x12(\n" +
 	"\x06status\x18\x06 \x01(\x0e2\x10.task.TaskStatusR\x06status\x12\x1f\n" +
 	"\vexecuted_at\x18\a \x01(\x03R\n" +
-	"executedAt\"c\n" +
+	"executedAt\"\x81\x02\n" +
 	"\x11InvokeTaskRequest\x12\x18\n" +
 	"\acommand\x18\x01 \x01(\tR\acommand\x12\x12\n" +
 	"\x04args\x18\x02 \x03(\tR\x04args\x12\x17\n" +
-	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01B\a\n" +
+	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x1f\n" +
+	"\vworking_dir\x18\x04 \x01(\tR\n" +
+	"workingDir\x12?\n" +
+	"\benv_vars\x18\x05 \x03(\v2$.task.InvokeTaskRequest.EnvVarsEntryR\aenvVars\x1a:\n" +
+	"\fEnvVarsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
 	"\x05_name\"4\n" +
 	"\x12InvokeTaskResponse\x12\x1e\n" +
 	"\x04task\x18\x01 \x01(\v2\n" +
 	".task.TaskR\x04task\"5\n" +
 	"\x11ListTasksResponse\x12 \n" +
 	"\x05tasks\x18\x01 \x03(\v2\n" +
-	".task.TaskR\x05tasks*X\n" +
+	".task.TaskR\x05tasks\"%\n" +
+	"\x0fStopTaskRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"D\n" +
+	"\x10StopTaskResponse\x12\x18\n" +
+	"\astopped\x18\x01 \x01(\bR\astopped\x12\x16\n" +
+	"\x06detail\x18\x02 \x01(\tR\x06detail*s\n" +
 	"\n" +
 	"TaskStatus\x12\x17\n" +
 	"\x13TASK_STATUS_RUNNING\x10\x00\x12\x19\n" +
-	"\x15TASK_STATUS_SUCCEEDED\x10\x01\x12\x16\n" +
-	"\x12TASK_STATUS_FAILED\x10\x022\x8c\x01\n" +
+	"\x15TASK_STATUS_SUCCEEDED\x10\x01\x12\x19\n" +
+	"\x15TASK_STATUS_CANCELLED\x10\x02\x12\x16\n" +
+	"\x12TASK_STATUS_FAILED\x10\x032\xc7\x01\n" +
 	"\vTaskService\x12?\n" +
 	"\n" +
 	"InvokeTask\x12\x17.task.InvokeTaskRequest\x1a\x18.task.InvokeTaskResponse\x12<\n" +
-	"\tListTasks\x12\x16.google.protobuf.Empty\x1a\x17.task.ListTasksResponseB(Z&loadept.com/pkg/asyncker/internal/taskb\x06proto3"
+	"\tListTasks\x12\x16.google.protobuf.Empty\x1a\x17.task.ListTasksResponse\x129\n" +
+	"\bStopTask\x12\x15.task.StopTaskRequest\x1a\x16.task.StopTaskResponseB(Z&loadept.com/pkg/asyncker/internal/taskb\x06proto3"
 
 var (
 	file_task_proto_rawDescOnce sync.Once
@@ -351,28 +479,34 @@ func file_task_proto_rawDescGZIP() []byte {
 }
 
 var file_task_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_task_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_task_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_task_proto_goTypes = []any{
 	(TaskStatus)(0),            // 0: task.TaskStatus
 	(*Task)(nil),               // 1: task.Task
 	(*InvokeTaskRequest)(nil),  // 2: task.InvokeTaskRequest
 	(*InvokeTaskResponse)(nil), // 3: task.InvokeTaskResponse
 	(*ListTasksResponse)(nil),  // 4: task.ListTasksResponse
-	(*emptypb.Empty)(nil),      // 5: google.protobuf.Empty
+	(*StopTaskRequest)(nil),    // 5: task.StopTaskRequest
+	(*StopTaskResponse)(nil),   // 6: task.StopTaskResponse
+	nil,                        // 7: task.InvokeTaskRequest.EnvVarsEntry
+	(*emptypb.Empty)(nil),      // 8: google.protobuf.Empty
 }
 var file_task_proto_depIdxs = []int32{
 	0, // 0: task.Task.status:type_name -> task.TaskStatus
-	1, // 1: task.InvokeTaskResponse.task:type_name -> task.Task
-	1, // 2: task.ListTasksResponse.tasks:type_name -> task.Task
-	2, // 3: task.TaskService.InvokeTask:input_type -> task.InvokeTaskRequest
-	5, // 4: task.TaskService.ListTasks:input_type -> google.protobuf.Empty
-	3, // 5: task.TaskService.InvokeTask:output_type -> task.InvokeTaskResponse
-	4, // 6: task.TaskService.ListTasks:output_type -> task.ListTasksResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	7, // 1: task.InvokeTaskRequest.env_vars:type_name -> task.InvokeTaskRequest.EnvVarsEntry
+	1, // 2: task.InvokeTaskResponse.task:type_name -> task.Task
+	1, // 3: task.ListTasksResponse.tasks:type_name -> task.Task
+	2, // 4: task.TaskService.InvokeTask:input_type -> task.InvokeTaskRequest
+	8, // 5: task.TaskService.ListTasks:input_type -> google.protobuf.Empty
+	5, // 6: task.TaskService.StopTask:input_type -> task.StopTaskRequest
+	3, // 7: task.TaskService.InvokeTask:output_type -> task.InvokeTaskResponse
+	4, // 8: task.TaskService.ListTasks:output_type -> task.ListTasksResponse
+	6, // 9: task.TaskService.StopTask:output_type -> task.StopTaskResponse
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_task_proto_init() }
@@ -387,7 +521,7 @@ func file_task_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_task_proto_rawDesc), len(file_task_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

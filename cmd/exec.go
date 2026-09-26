@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"loadept.com/pkg/asyncker/internal/namegenerator"
 	"loadept.com/pkg/asyncker/internal/task"
 )
 
@@ -20,21 +20,33 @@ var execCmd = &cobra.Command{
 	Short: "Execute a passed command",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
 		conn, err := net.DialTimeout("unix", socketPath, 1*time.Second)
 		if err != nil {
-			fmt.Println("No daemon is running")
-			if down {
-				os.Remove(socketPath)
-			}
-			return nil
+			os.Remove(socketPath)
+			return errors.New("no daemon is running")
 		}
 		conn.Close()
 
 		command := args[0]
 		commandArgs := args[1:]
+
 		var taskName *string
 		if name != "" {
 			taskName = &name
+		}
+
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("get working directory: %w", err)
+		}
+		envMap := make(map[string]string)
+		for _, env := range os.Environ() {
+			pair := strings.SplitN(env, "=", 2)
+			if len(pair) == 2 {
+				envMap[pair[0]] = pair[1]
+			}
 		}
 
 		client, err := task.NewClient(socketPath)
@@ -43,11 +55,7 @@ var execCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		task, err := client.InvokeTask(cmd.Context(), &task.InvokeTaskRequest{
-			Command: command,
-			Args:    commandArgs,
-			Name:    taskName,
-		})
+		task, err := client.InvokeTask(ctx, command, commandArgs, taskName, cwd, envMap)
 		if err != nil {
 			return fmt.Errorf("execute invoke: %w", err)
 		}
@@ -73,26 +81,4 @@ func init() {
 	// execCmd.Flags().StringVarP(&output, "output", "o", "", "Redirects stdout and stderr to the specified file")
 	execCmd.Flags().StringVar(&name, "name", "", "Assign a name to the task")
 	execCmd.Flags().SetInterspersed(false)
-}
-
-func genTaskName(tasks []Task) string {
-	useSufix := false
-outer:
-	for {
-		newName := namegenerator.GenerateName(useSufix)
-		for _, t := range tasks {
-			if t.Name == newName {
-				useSufix = true
-				continue outer
-			}
-		}
-		return newName
-	}
-}
-
-func genTaskID(tasks []Task) int {
-	if len(tasks) > 0 {
-		return tasks[len(tasks)-1].ID + 1
-	}
-	return 0
 }

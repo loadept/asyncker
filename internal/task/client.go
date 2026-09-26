@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -37,7 +39,21 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func (c *Client) InvokeTask(ctx context.Context, in *InvokeTaskRequest) (*Task, error) {
+func (c *Client) InvokeTask(
+	ctx context.Context,
+	command string,
+	args []string,
+	name *string,
+	wd string,
+	envs map[string]string,
+) (*Task, error) {
+	in := &InvokeTaskRequest{
+		Command:    command,
+		Args:       args,
+		Name:       name,
+		WorkingDir: wd,
+		EnvVars:    envs,
+	}
 	resp, err := c.remote.InvokeTask(ctx, in)
 	if err != nil {
 		return nil, fmt.Errorf("RPC InvokeTask: %w", err)
@@ -53,4 +69,26 @@ func (c *Client) ListTasks(ctx context.Context) ([]*Task, error) {
 	}
 
 	return resp.GetTasks(), nil
+}
+
+func (c *Client) StopTask(ctx context.Context, taskName string) (string, error) {
+	in := &StopTaskRequest{Name: taskName}
+	resp, err := c.remote.StopTask(ctx, in)
+	if err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			return "", fmt.Errorf("connection or transport: %w", err)
+		}
+
+		switch st.Code() {
+		case codes.NotFound:
+			return "", fmt.Errorf("task does not exist: %s", st.Message())
+		case codes.FailedPrecondition:
+			return "", fmt.Errorf("it cannot be stopped; it has already finished: %s", st.Message())
+		default:
+			return "", fmt.Errorf("unexpected error: %s, %s", st.Code(), st.Message())
+		}
+	}
+
+	return resp.GetDetail(), nil
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -32,11 +33,8 @@ var daemonCmd = &cobra.Command{
 		switch {
 		case down || status:
 			if !isRunning {
-				fmt.Println("No daemon is running")
-				if down {
-					_ = os.Remove(socketPath)
-				}
-				return nil
+				os.Remove(socketPath)
+				return errors.New("no daemon is running")
 			}
 
 			client, err := daemon.NewClient(socketPath)

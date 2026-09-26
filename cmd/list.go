@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -19,13 +20,12 @@ var listCmd = &cobra.Command{
 	Use:   "list [flags]",
 	Short: "List registered tasks",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
 		conn, err := net.DialTimeout("unix", socketPath, 1*time.Second)
 		if err != nil {
-			fmt.Println("No daemon is running")
-			if down {
-				os.Remove(socketPath)
-			}
-			return nil
+			os.Remove(socketPath)
+			return errors.New("no daemon is running")
 		}
 		conn.Close()
 
@@ -35,7 +35,7 @@ var listCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		tasks, err := client.ListTasks(cmd.Context())
+		tasks, err := client.ListTasks(ctx)
 		if err != nil {
 			return fmt.Errorf("listing tasks: %w", err)
 		}

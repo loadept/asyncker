@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	TaskService_InvokeTask_FullMethodName = "/task.TaskService/InvokeTask"
 	TaskService_ListTasks_FullMethodName  = "/task.TaskService/ListTasks"
+	TaskService_StopTask_FullMethodName   = "/task.TaskService/StopTask"
 )
 
 // TaskServiceClient is the client API for TaskService service.
@@ -30,6 +31,7 @@ const (
 type TaskServiceClient interface {
 	InvokeTask(ctx context.Context, in *InvokeTaskRequest, opts ...grpc.CallOption) (*InvokeTaskResponse, error)
 	ListTasks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListTasksResponse, error)
+	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
 }
 
 type taskServiceClient struct {
@@ -60,12 +62,23 @@ func (c *taskServiceClient) ListTasks(ctx context.Context, in *emptypb.Empty, op
 	return out, nil
 }
 
+func (c *taskServiceClient) StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StopTaskResponse)
+	err := c.cc.Invoke(ctx, TaskService_StopTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TaskServiceServer is the server API for TaskService service.
 // All implementations must embed UnimplementedTaskServiceServer
 // for forward compatibility.
 type TaskServiceServer interface {
 	InvokeTask(context.Context, *InvokeTaskRequest) (*InvokeTaskResponse, error)
 	ListTasks(context.Context, *emptypb.Empty) (*ListTasksResponse, error)
+	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
 	mustEmbedUnimplementedTaskServiceServer()
 }
 
@@ -81,6 +94,9 @@ func (UnimplementedTaskServiceServer) InvokeTask(context.Context, *InvokeTaskReq
 }
 func (UnimplementedTaskServiceServer) ListTasks(context.Context, *emptypb.Empty) (*ListTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTasks not implemented")
+}
+func (UnimplementedTaskServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
 }
 func (UnimplementedTaskServiceServer) mustEmbedUnimplementedTaskServiceServer() {}
 func (UnimplementedTaskServiceServer) testEmbeddedByValue()                     {}
@@ -139,6 +155,24 @@ func _TaskService_ListTasks_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TaskService_StopTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).StopTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_StopTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).StopTask(ctx, req.(*StopTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TaskService_ServiceDesc is the grpc.ServiceDesc for TaskService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -153,6 +187,10 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTasks",
 			Handler:    _TaskService_ListTasks_Handler,
+		},
+		{
+			MethodName: "StopTask",
+			Handler:    _TaskService_StopTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -18,6 +18,8 @@ import (
 	"loadept.com/pkg/asyncker/internal/namegenerator"
 )
 
+const killTermTimeout = 10 * time.Second
+
 type TaskServer struct {
 	UnimplementedTaskServiceServer
 	logger   *slog.Logger
@@ -60,6 +62,17 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 
 	cmd := exec.Command(req.Command, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+
+	if req.WorkingDir != "" {
+		cmd.Dir = req.WorkingDir
+	}
+	if len(req.EnvVars) > 0 {
+		envSlice := make([]string, 0, len(req.EnvVars))
+		for k, v := range req.EnvVars {
+			envSlice = append(envSlice, fmt.Sprintf("%s=%s", k, v))
+		}
+		cmd.Env = envSlice
+	}
 	cmd.Stdout = outFile
 	cmd.Stderr = errFile
 
@@ -69,7 +82,7 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 		os.Remove(outFilePath)
 		os.Remove(errFilePath)
 		s.releaseTaskName(taskName)
-		return nil, fmt.Errorf("execute command: %w", err)
+		return nil, status.Errorf(codes.Internal, "execute command: %v", err)
 	}
 
 	cmdStr := strings.TrimSpace(fmt.Sprintf("%s %s", command, strings.Join(args, " ")))
@@ -103,13 +116,25 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 			return
 		}
 
-		if waitErr != nil {
-			t.Status = TaskStatus_TASK_STATUS_FAILED
-			s.logger.Info("command finished with error", "name", taskName, "command", cmdStr, "pid", pid, "err", waitErr)
-		} else {
+		if waitErr == nil {
 			t.Status = TaskStatus_TASK_STATUS_SUCCEEDED
 			s.logger.Info("command finished successfully", "name", taskName, "command", cmdStr, "pid", pid)
+			return
 		}
+
+		if exitErr, ok := waitErr.(*exec.ExitError); ok {
+			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+				sig := status.Signal()
+				if sig == syscall.SIGTERM || sig == syscall.SIGINT {
+					task.Status = TaskStatus_TASK_STATUS_CANCELLED
+					s.logger.Info("command cancelled by signal", "name", taskName, "signal", sig.String())
+					return
+				}
+			}
+		}
+
+		t.Status = TaskStatus_TASK_STATUS_FAILED
+		s.logger.Info("command finished with error", "name", taskName, "command", cmdStr, "pid", pid, "err", waitErr)
 	}(cmd, outFile, errFile)
 
 	return &InvokeTaskResponse{Task: task}, nil
@@ -125,6 +150,41 @@ func (s *TaskServer) ListTasks(ctx context.Context, _ *emptypb.Empty) (*ListTask
 	}
 
 	return &ListTasksResponse{Tasks: taskList}, nil
+}
+
+func (s *TaskServer) StopTask(ctx context.Context, req *StopTaskRequest) (*StopTaskResponse, error) {
+	taskName := req.Name
+
+	s.mu.RLock()
+	task, ok := s.tasks[taskName]
+	s.mu.RUnlock()
+
+	if !ok || task == nil {
+		return nil, status.Errorf(codes.NotFound, "task %s not found", taskName)
+	}
+	if task.Status != TaskStatus_TASK_STATUS_RUNNING {
+		return nil, status.Errorf(codes.FailedPrecondition, "task %q is not running (status: %s)", req.Name, task.Status)
+	}
+
+	pid := int(task.GetPid())
+
+	if err := syscall.Kill(-pid, syscall.SIGTERM); err != nil && err != syscall.ESRCH {
+		return nil, status.Errorf(codes.Internal, "terminate task: %v", err)
+	}
+	if !pollUntilDead(pid, killTermTimeout) {
+		syscall.Kill(-pid, syscall.SIGKILL)
+		pollUntilDead(pid, 2*time.Second)
+
+		return &StopTaskResponse{
+			Stopped: true,
+			Detail:  "task stopped successfully via SIGKILL",
+		}, nil
+	}
+
+	return &StopTaskResponse{
+		Stopped: true,
+		Detail:  "task stopped successfully",
+	}, nil
 }
 
 func (s *TaskServer) reserveTaskName(reqName *string) (string, error) {
@@ -155,4 +215,15 @@ func (s *TaskServer) releaseTaskName(name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.tasks, name)
+}
+
+func pollUntilDead(pid int, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if err := syscall.Kill(pid, 0); err == syscall.ESRCH {
+			return true
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	return false
 }
