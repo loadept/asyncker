@@ -1,0 +1,40 @@
+version: "2"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gosec
+    - revive
+    - bodyclose
+    - noctx
+
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+    gosec:
+      excludes:
+        - G104
+        - G304
+
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - noctx
+          - gosec
+
+run:
+  timeout: 5m
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

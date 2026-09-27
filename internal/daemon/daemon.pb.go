@@ -25,7 +25,7 @@ const (
 type StatusResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Running       bool                   `protobuf:"varint,1,opt,name=running,proto3" json:"running,omitempty"`
-	Pid           int32                  `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`
+	Pid           int64                  `protobuf:"varint,2,opt,name=pid,proto3" json:"pid,omitempty"`
 	Uptime        string                 `protobuf:"bytes,3,opt,name=uptime,proto3" json:"uptime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -68,7 +68,7 @@ func (x *StatusResponse) GetRunning() bool {
 	return false
 }
 
-func (x *StatusResponse) GetPid() int32 {
+func (x *StatusResponse) GetPid() int64 {
 	if x != nil {
 		return x.Pid
 	}
@@ -89,7 +89,7 @@ const file_daemon_proto_rawDesc = "" +
 	"\fdaemon.proto\x12\x06daemon\x1a\x1bgoogle/protobuf/empty.proto\"T\n" +
 	"\x0eStatusResponse\x12\x18\n" +
 	"\arunning\x18\x01 \x01(\bR\arunning\x12\x10\n" +
-	"\x03pid\x18\x02 \x01(\x05R\x03pid\x12\x16\n" +
+	"\x03pid\x18\x02 \x01(\x03R\x03pid\x12\x16\n" +
 	"\x06uptime\x18\x03 \x01(\tR\x06uptime2\x8d\x01\n" +
 	"\rDaemonService\x12<\n" +
 	"\n" +

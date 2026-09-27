@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"net"
 	"os"
-	"os/signal"
-	"syscall"
 	"text/tabwriter"
 	"time"
 
@@ -24,6 +22,8 @@ var daemonCmd = &cobra.Command{
 	Use:   "daemon",
 	Short: "Manage asyncker daemon",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
 		conn, err := net.DialTimeout("unix", socketPath, 1*time.Second)
 		isRunning := err == nil
 		if isRunning {
@@ -43,17 +43,17 @@ var daemonCmd = &cobra.Command{
 			}
 			defer client.Close()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			timeoutCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
 
 			switch {
 			case down:
-				if err := client.StopDaemon(ctx); err != nil {
+				if err := client.StopDaemon(timeoutCtx); err != nil {
 					return fmt.Errorf("shutdown daemon: %w", err)
 				}
 				fmt.Println("Daemon shutdown successfully")
 			case status:
-				status, err := client.DaemonStatus(ctx)
+				status, err := client.DaemonStatus(timeoutCtx)
 				if err != nil {
 					return fmt.Errorf("get status: %w", err)
 				}
@@ -79,7 +79,7 @@ var daemonCmd = &cobra.Command{
 				return fmt.Errorf("remove orphan socket: %w", err)
 			}
 
-			logFile, err := os.OpenFile(daemonLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+			logFile, err := os.OpenFile(daemonLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 			if err != nil {
 				return fmt.Errorf("open daemon log file: %w", err)
 			}
@@ -93,6 +93,7 @@ var daemonCmd = &cobra.Command{
 
 			stopCh := make(chan struct{}, 1)
 			errCh, err := socket.StartDaemon(
+				ctx,
 				func(s *grpc.Server) {
 					daemon.RegisterDaemonServiceServer(s, daemon.NewDaemonServer(logger, stopCh))
 				},
@@ -103,15 +104,12 @@ var daemonCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("run daemon: %w", err)
 			}
-
 			fmt.Println("Daemon running successfully")
-			shutdown, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-			defer stop()
 
 			select {
 			case err := <-errCh:
 				return err
-			case <-shutdown.Done():
+			case <-ctx.Done():
 				fmt.Println("Shutting down daemon (signal)...")
 			case <-stopCh:
 				fmt.Println("Shutting down daemon (request)...")

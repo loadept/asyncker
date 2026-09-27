@@ -45,14 +45,14 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 	}
 
 	outFilePath := filepath.Join(s.logsPath, fmt.Sprintf("%s_out.log", taskName))
-	outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	outFile, err := os.OpenFile(outFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
 		s.releaseTaskName(taskName)
 		return nil, status.Errorf(codes.Internal, "open out log file: %v", err)
 	}
 
 	errFilePath := filepath.Join(s.logsPath, fmt.Sprintf("%s_err.log", taskName))
-	errFile, err := os.OpenFile(errFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	errFile, err := os.OpenFile(errFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
 		outFile.Close()
 		os.Remove(outFilePath)
@@ -60,6 +60,8 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 		return nil, status.Errorf(codes.Internal, "open err log file: %v", err)
 	}
 
+	// #nosec G204 -- command received only via local Unix socket, not exposed to the network
+	// nolint:noctx // intentional fire-and-forget
 	cmd := exec.Command(req.Command, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 
@@ -172,7 +174,9 @@ func (s *TaskServer) StopTask(ctx context.Context, req *StopTaskRequest) (*StopT
 		return nil, status.Errorf(codes.Internal, "terminate task: %v", err)
 	}
 	if !pollUntilDead(pid, killTermTimeout) {
-		syscall.Kill(-pid, syscall.SIGKILL)
+		if err := syscall.Kill(-pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+			s.logger.Warn("failed to send SIGKILL", "pid", pid, "err", err)
+		}
 		pollUntilDead(pid, 2*time.Second)
 
 		return &StopTaskResponse{

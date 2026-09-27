@@ -56,7 +56,7 @@ func LoadTasks(filePath string) ([]Task, error) {
 }
 
 func SaveTasks(filePath string, tasks []Task) error {
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0o644)
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}

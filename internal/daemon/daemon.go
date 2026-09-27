@@ -2,6 +2,7 @@
 package daemon
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -22,9 +23,10 @@ func NewDaemonManager(socketPath string) *DaemonManager {
 	return new(DaemonManager{socketPath: socketPath})
 }
 
-func (m *DaemonManager) StartDaemon(registers ...func(*grpc.Server)) (<-chan error, error) {
+func (m *DaemonManager) StartDaemon(ctx context.Context, registers ...func(*grpc.Server)) (<-chan error, error) {
 	old := syscall.Umask(0o177)
-	listener, err := net.Listen("unix", m.socketPath)
+	var lc net.ListenConfig
+	listener, err := lc.Listen(ctx, "unix", m.socketPath)
 	syscall.Umask(old)
 
 	if err != nil {

@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ var (
 	daemonLogFile string
 	socketPath    string
 	tasksPath     string
-	selfPath      string
+	// selfPath      string
 )
 
 var rootCmd = &cobra.Command{
@@ -29,8 +30,8 @@ executing and managing commands asynchronously.`,
 	},
 }
 
-func Execute() error {
-	return rootCmd.Execute()
+func Execute(ctx context.Context) error {
+	return rootCmd.ExecuteContext(ctx)
 }
 
 func init() {
@@ -54,13 +55,13 @@ func initConfig() {
 	tasksPath = filepath.Join(configPath, "tasks.gob")
 	daemonLogFile = filepath.Join(configPath, "daemon.log")
 
-	if err := os.MkdirAll(logsPath, 0o755); err != nil {
+	if err := os.MkdirAll(logsPath, 0o750); err != nil {
 		fmt.Printf("create project directory: %v\n", err)
 		return
 	}
 
 	if _, err := os.Stat(tasksPath); os.IsNotExist(err) {
-		file, err := os.OpenFile(tasksPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+		file, err := os.OpenFile(tasksPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 		if err != nil {
 			fmt.Printf("create project file: %v\n", err)
 			return
@@ -68,9 +69,9 @@ func initConfig() {
 		defer file.Close()
 	}
 
-	selfPath, err = os.Executable()
-	if err != nil {
-		fmt.Printf("get self path: %v\n", err)
-		return
-	}
+	// selfPath, err = os.Executable()
+	// if err != nil {
+	// 	fmt.Printf("get self path: %v\n", err)
+	// 	return
+	// }
 }

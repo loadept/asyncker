@@ -9,7 +9,7 @@ import "google/protobuf/empty.proto";
 
 message StatusResponse {  
     bool running = 1;
-    int32 pid = 2;
+    int64 pid = 2;
     string uptime = 3;
 }
 

@@ -34,7 +34,7 @@ func (s *DaemonServer) DaemonStatus(ctx context.Context, req *emptypb.Empty) (*S
 
 	return &StatusResponse{
 		Running: true,
-		Pid:     int32(os.Getpid()),
+		Pid:     int64(os.Getpid()),
 		Uptime:  uptime,
 	}, nil
 }

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	adjetives = [...]string{
+	adjectives = [...]string{
 		"admiring",
 		"adoring",
 		"affectionate",
@@ -482,9 +482,9 @@ var (
 )
 
 func GenerateName(sufix bool) string {
-	name := adjetives[rand.IntN(len(adjetives))] + "_" + names[rand.IntN(len(names))]
+	name := adjectives[rand.IntN(len(adjectives))] + "_" + names[rand.IntN(len(names))] // #nosec G404 -- Use of weak random number generator (math/rand instead of crypto/rand)
 	if sufix {
-		name += strconv.Itoa(rand.IntN(10))
+		name += strconv.Itoa(rand.IntN(10)) // #nosec G404 -- Use of weak random number generator (math/rand instead of crypto/rand)
 	}
 	return name
 }
