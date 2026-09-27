@@ -63,8 +63,12 @@ var listCmd = &cobra.Command{
 
 		switch format {
 		case "json":
+			m := protojson.MarshalOptions{
+				EmitUnpopulated: true,
+				UseEnumNumbers:  false,
+			}
 			for _, task := range tasks {
-				out, err := protojson.Marshal(task)
+				out, err := m.Marshal(task)
 				if err != nil {
 					return fmt.Errorf("formating tasks: %w", err)
 				}

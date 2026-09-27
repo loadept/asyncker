@@ -14,14 +14,14 @@ enum TaskStatus {
 }
 
 message Task {
-    string name = 2;
-    string command = 3;
-    repeated string args = 4;
-    int64 pid = 5;
-    TaskStatus status = 6;
-    int64 executed_at = 7;
-    uint64 mem_usage = 8;
-    uint32 num_threads = 9;
+    string name = 1;
+    string command = 2;
+    repeated string args = 3;
+    int64 pid = 4;
+    TaskStatus status = 5;
+    int64 executed_at = 6;
+    uint64 mem_usage = 7;
+    uint32 num_threads = 8;
 }
 
 message InvokeTaskRequest {

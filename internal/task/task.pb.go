@@ -76,14 +76,14 @@ func (TaskStatus) EnumDescriptor() ([]byte, []int) {
 
 type Task struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Command       string                 `protobuf:"bytes,3,opt,name=command,proto3" json:"command,omitempty"`
-	Args          []string               `protobuf:"bytes,4,rep,name=args,proto3" json:"args,omitempty"`
-	Pid           int64                  `protobuf:"varint,5,opt,name=pid,proto3" json:"pid,omitempty"`
-	Status        TaskStatus             `protobuf:"varint,6,opt,name=status,proto3,enum=task.TaskStatus" json:"status,omitempty"`
-	ExecutedAt    int64                  `protobuf:"varint,7,opt,name=executed_at,json=executedAt,proto3" json:"executed_at,omitempty"`
-	MemUsage      uint64                 `protobuf:"varint,8,opt,name=mem_usage,json=memUsage,proto3" json:"mem_usage,omitempty"`
-	NumThreads    uint32                 `protobuf:"varint,9,opt,name=num_threads,json=numThreads,proto3" json:"num_threads,omitempty"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Command       string                 `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	Args          []string               `protobuf:"bytes,3,rep,name=args,proto3" json:"args,omitempty"`
+	Pid           int64                  `protobuf:"varint,4,opt,name=pid,proto3" json:"pid,omitempty"`
+	Status        TaskStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=task.TaskStatus" json:"status,omitempty"`
+	ExecutedAt    int64                  `protobuf:"varint,6,opt,name=executed_at,json=executedAt,proto3" json:"executed_at,omitempty"`
+	MemUsage      uint64                 `protobuf:"varint,7,opt,name=mem_usage,json=memUsage,proto3" json:"mem_usage,omitempty"`
+	NumThreads    uint32                 `protobuf:"varint,8,opt,name=num_threads,json=numThreads,proto3" json:"num_threads,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -449,15 +449,15 @@ const file_task_proto_rawDesc = "" +
 	"\n" +
 	"task.proto\x12\x04task\x1a\x1bgoogle/protobuf/empty.proto\"\xe3\x01\n" +
 	"\x04Task\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\acommand\x18\x03 \x01(\tR\acommand\x12\x12\n" +
-	"\x04args\x18\x04 \x03(\tR\x04args\x12\x10\n" +
-	"\x03pid\x18\x05 \x01(\x03R\x03pid\x12(\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x10.task.TaskStatusR\x06status\x12\x1f\n" +
-	"\vexecuted_at\x18\a \x01(\x03R\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
+	"\acommand\x18\x02 \x01(\tR\acommand\x12\x12\n" +
+	"\x04args\x18\x03 \x03(\tR\x04args\x12\x10\n" +
+	"\x03pid\x18\x04 \x01(\x03R\x03pid\x12(\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x10.task.TaskStatusR\x06status\x12\x1f\n" +
+	"\vexecuted_at\x18\x06 \x01(\x03R\n" +
 	"executedAt\x12\x1b\n" +
-	"\tmem_usage\x18\b \x01(\x04R\bmemUsage\x12\x1f\n" +
-	"\vnum_threads\x18\t \x01(\rR\n" +
+	"\tmem_usage\x18\a \x01(\x04R\bmemUsage\x12\x1f\n" +
+	"\vnum_threads\x18\b \x01(\rR\n" +
 	"numThreads\"\x81\x02\n" +
 	"\x11InvokeTaskRequest\x12\x18\n" +
 	"\acommand\x18\x01 \x01(\tR\acommand\x12\x12\n" +

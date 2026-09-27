@@ -24,6 +24,8 @@ import (
 
 const killTermTimeout = 10 * time.Second
 
+var pageSize = uint64(os.Getpagesize())
+
 type TaskServer struct {
 	UnimplementedTaskServiceServer
 	logger   *slog.Logger
@@ -174,7 +176,7 @@ func (s *TaskServer) ListTasks(ctx context.Context, _ *emptypb.Empty) (*ListTask
 			return nil, status.Errorf(codes.Internal, "statm does not contain enough fields")
 		}
 		rssPages, _ := strconv.ParseUint(string(statmFields[1]), 10, 64)
-		task.MemUsage = rssPages * uint64(os.Getpagesize())
+		task.MemUsage = rssPages * pageSize
 
 		statData, err := os.ReadFile(fmt.Sprintf("/proc/%d/stat", task.GetPid()))
 		if err != nil {
