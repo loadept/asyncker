@@ -63,6 +63,7 @@ var execCmd = &cobra.Command{
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 5, ' ', 0)
 		defer w.Flush()
 
+		fmt.Fprintln(w, "Command executed successfully")
 		fmt.Fprintln(w, "Name\tPID\tCmdLine\tStatus")
 		fmt.Fprintf(
 			w,

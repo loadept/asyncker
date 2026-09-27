@@ -1,12 +1,16 @@
 package task
 
 import (
+	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -128,7 +132,7 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.Signaled() {
 				sig := status.Signal()
 				if sig == syscall.SIGTERM || sig == syscall.SIGINT {
-					task.Status = TaskStatus_TASK_STATUS_CANCELLED
+					t.Status = TaskStatus_TASK_STATUS_CANCELLED
 					s.logger.Info("command cancelled by signal", "name", taskName, "signal", sig.String())
 					return
 				}
@@ -143,12 +147,49 @@ func (s *TaskServer) InvokeTask(ctx context.Context, req *InvokeTaskRequest) (*I
 }
 
 func (s *TaskServer) ListTasks(ctx context.Context, _ *emptypb.Empty) (*ListTasksResponse, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
 	taskList := make([]*Task, 0, len(s.tasks))
+	s.mu.RLock()
 	for _, task := range s.tasks {
 		taskList = append(taskList, task)
+	}
+	s.mu.RUnlock()
+
+	slices.SortFunc(taskList, func(a, b *Task) int {
+		return cmp.Compare(a.GetExecutedAt(), b.GetExecutedAt())
+	})
+
+	for _, task := range taskList {
+		if task.GetStatus() != TaskStatus_TASK_STATUS_RUNNING {
+			task.MemUsage = 0
+			task.NumThreads = 0
+			continue
+		}
+
+		statmData, err := os.ReadFile(fmt.Sprintf("/proc/%d/statm", task.GetPid()))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "read proc statm")
+		}
+		statmFields := bytes.Fields(statmData)
+		if len(statmFields) < 2 {
+			return nil, status.Errorf(codes.Internal, "statm does not contain enough fields")
+		}
+		rssPages, _ := strconv.ParseUint(string(statmFields[1]), 10, 64)
+		task.MemUsage = rssPages * uint64(os.Getpagesize())
+
+		statData, err := os.ReadFile(fmt.Sprintf("/proc/%d/stat", task.GetPid()))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "read proc stat: %v", err)
+		}
+		lastParen := bytes.LastIndexByte(statData, ')')
+		if lastParen == -1 || len(statData) <= lastParen+2 {
+			return nil, status.Errorf(codes.Internal, "invalid format of stat")
+		}
+		statFields := bytes.Fields(statData[lastParen+2:])
+		if len(statFields) < 18 {
+			return nil, status.Errorf(codes.Internal, "stat does not contain enough fields")
+		}
+		threads, _ := strconv.ParseUint(string(statFields[17]), 10, 32)
+		task.NumThreads = uint32(threads)
 	}
 
 	return &ListTasksResponse{Tasks: taskList}, nil
@@ -164,7 +205,7 @@ func (s *TaskServer) StopTask(ctx context.Context, req *StopTaskRequest) (*StopT
 	if !ok || task == nil {
 		return nil, status.Errorf(codes.NotFound, "task %s not found", taskName)
 	}
-	if task.Status != TaskStatus_TASK_STATUS_RUNNING {
+	if task.GetStatus() != TaskStatus_TASK_STATUS_RUNNING {
 		return nil, status.Errorf(codes.FailedPrecondition, "task %q is not running (status: %s)", req.Name, task.Status)
 	}
 
@@ -181,13 +222,15 @@ func (s *TaskServer) StopTask(ctx context.Context, req *StopTaskRequest) (*StopT
 
 		return &StopTaskResponse{
 			Stopped: true,
-			Detail:  "task stopped successfully via SIGKILL",
+			Via:     syscall.SIGKILL.String(),
+			Task:    task,
 		}, nil
 	}
 
 	return &StopTaskResponse{
 		Stopped: true,
-		Detail:  "task stopped successfully",
+		Via:     syscall.SIGTERM.String(),
+		Task:    task,
 	}, nil
 }
 

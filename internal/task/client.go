@@ -36,6 +36,7 @@ func (c *Client) Close() error {
 	if c.conn != nil {
 		return c.conn.Close()
 	}
+
 	return nil
 }
 
@@ -71,24 +72,24 @@ func (c *Client) ListTasks(ctx context.Context) ([]*Task, error) {
 	return resp.GetTasks(), nil
 }
 
-func (c *Client) StopTask(ctx context.Context, taskName string) (string, error) {
+func (c *Client) StopTask(ctx context.Context, taskName string) (string, *Task, error) {
 	in := &StopTaskRequest{Name: taskName}
 	resp, err := c.remote.StopTask(ctx, in)
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
-			return "", fmt.Errorf("connection or transport: %w", err)
+			return "", nil, fmt.Errorf("connection or transport: %w", err)
 		}
 
 		switch st.Code() {
 		case codes.NotFound:
-			return "", fmt.Errorf("task does not exist: %s", st.Message())
+			return "", nil, fmt.Errorf("task does not exist: %s", st.Message())
 		case codes.FailedPrecondition:
-			return "", fmt.Errorf("it cannot be stopped; it has already finished: %s", st.Message())
+			return "", nil, fmt.Errorf("it cannot be stopped; it has already finished: %s", st.Message())
 		default:
-			return "", fmt.Errorf("unexpected error: %s, %s", st.Code(), st.Message())
+			return "", nil, fmt.Errorf("unexpected error: %s, %s", st.Code(), st.Message())
 		}
 	}
 
-	return resp.GetDetail(), nil
+	return resp.GetVia(), resp.GetTask(), nil
 }

@@ -82,6 +82,8 @@ type Task struct {
 	Pid           int64                  `protobuf:"varint,5,opt,name=pid,proto3" json:"pid,omitempty"`
 	Status        TaskStatus             `protobuf:"varint,6,opt,name=status,proto3,enum=task.TaskStatus" json:"status,omitempty"`
 	ExecutedAt    int64                  `protobuf:"varint,7,opt,name=executed_at,json=executedAt,proto3" json:"executed_at,omitempty"`
+	MemUsage      uint64                 `protobuf:"varint,8,opt,name=mem_usage,json=memUsage,proto3" json:"mem_usage,omitempty"`
+	NumThreads    uint32                 `protobuf:"varint,9,opt,name=num_threads,json=numThreads,proto3" json:"num_threads,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -154,6 +156,20 @@ func (x *Task) GetStatus() TaskStatus {
 func (x *Task) GetExecutedAt() int64 {
 	if x != nil {
 		return x.ExecutedAt
+	}
+	return 0
+}
+
+func (x *Task) GetMemUsage() uint64 {
+	if x != nil {
+		return x.MemUsage
+	}
+	return 0
+}
+
+func (x *Task) GetNumThreads() uint32 {
+	if x != nil {
+		return x.NumThreads
 	}
 	return 0
 }
@@ -369,7 +385,8 @@ func (x *StopTaskRequest) GetName() string {
 type StopTaskResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Stopped       bool                   `protobuf:"varint,1,opt,name=stopped,proto3" json:"stopped,omitempty"`
-	Detail        string                 `protobuf:"bytes,2,opt,name=detail,proto3" json:"detail,omitempty"`
+	Via           string                 `protobuf:"bytes,2,opt,name=via,proto3" json:"via,omitempty"`
+	Task          *Task                  `protobuf:"bytes,3,opt,name=task,proto3" json:"task,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -411,11 +428,18 @@ func (x *StopTaskResponse) GetStopped() bool {
 	return false
 }
 
-func (x *StopTaskResponse) GetDetail() string {
+func (x *StopTaskResponse) GetVia() string {
 	if x != nil {
-		return x.Detail
+		return x.Via
 	}
 	return ""
+}
+
+func (x *StopTaskResponse) GetTask() *Task {
+	if x != nil {
+		return x.Task
+	}
+	return nil
 }
 
 var File_task_proto protoreflect.FileDescriptor
@@ -423,7 +447,7 @@ var File_task_proto protoreflect.FileDescriptor
 const file_task_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"task.proto\x12\x04task\x1a\x1bgoogle/protobuf/empty.proto\"\xa5\x01\n" +
+	"task.proto\x12\x04task\x1a\x1bgoogle/protobuf/empty.proto\"\xe3\x01\n" +
 	"\x04Task\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\acommand\x18\x03 \x01(\tR\acommand\x12\x12\n" +
@@ -431,7 +455,10 @@ const file_task_proto_rawDesc = "" +
 	"\x03pid\x18\x05 \x01(\x03R\x03pid\x12(\n" +
 	"\x06status\x18\x06 \x01(\x0e2\x10.task.TaskStatusR\x06status\x12\x1f\n" +
 	"\vexecuted_at\x18\a \x01(\x03R\n" +
-	"executedAt\"\x81\x02\n" +
+	"executedAt\x12\x1b\n" +
+	"\tmem_usage\x18\b \x01(\x04R\bmemUsage\x12\x1f\n" +
+	"\vnum_threads\x18\t \x01(\rR\n" +
+	"numThreads\"\x81\x02\n" +
 	"\x11InvokeTaskRequest\x12\x18\n" +
 	"\acommand\x18\x01 \x01(\tR\acommand\x12\x12\n" +
 	"\x04args\x18\x02 \x03(\tR\x04args\x12\x17\n" +
@@ -450,10 +477,12 @@ const file_task_proto_rawDesc = "" +
 	"\x05tasks\x18\x01 \x03(\v2\n" +
 	".task.TaskR\x05tasks\"%\n" +
 	"\x0fStopTaskRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"D\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"^\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\astopped\x18\x01 \x01(\bR\astopped\x12\x16\n" +
-	"\x06detail\x18\x02 \x01(\tR\x06detail*s\n" +
+	"\astopped\x18\x01 \x01(\bR\astopped\x12\x10\n" +
+	"\x03via\x18\x02 \x01(\tR\x03via\x12\x1e\n" +
+	"\x04task\x18\x03 \x01(\v2\n" +
+	".task.TaskR\x04task*s\n" +
 	"\n" +
 	"TaskStatus\x12\x17\n" +
 	"\x13TASK_STATUS_RUNNING\x10\x00\x12\x19\n" +
@@ -496,17 +525,18 @@ var file_task_proto_depIdxs = []int32{
 	7, // 1: task.InvokeTaskRequest.env_vars:type_name -> task.InvokeTaskRequest.EnvVarsEntry
 	1, // 2: task.InvokeTaskResponse.task:type_name -> task.Task
 	1, // 3: task.ListTasksResponse.tasks:type_name -> task.Task
-	2, // 4: task.TaskService.InvokeTask:input_type -> task.InvokeTaskRequest
-	8, // 5: task.TaskService.ListTasks:input_type -> google.protobuf.Empty
-	5, // 6: task.TaskService.StopTask:input_type -> task.StopTaskRequest
-	3, // 7: task.TaskService.InvokeTask:output_type -> task.InvokeTaskResponse
-	4, // 8: task.TaskService.ListTasks:output_type -> task.ListTasksResponse
-	6, // 9: task.TaskService.StopTask:output_type -> task.StopTaskResponse
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	1, // 4: task.StopTaskResponse.task:type_name -> task.Task
+	2, // 5: task.TaskService.InvokeTask:input_type -> task.InvokeTaskRequest
+	8, // 6: task.TaskService.ListTasks:input_type -> google.protobuf.Empty
+	5, // 7: task.TaskService.StopTask:input_type -> task.StopTaskRequest
+	3, // 8: task.TaskService.InvokeTask:output_type -> task.InvokeTaskResponse
+	4, // 9: task.TaskService.ListTasks:output_type -> task.ListTasksResponse
+	6, // 10: task.TaskService.StopTask:output_type -> task.StopTaskResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_task_proto_init() }

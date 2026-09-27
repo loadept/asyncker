@@ -20,6 +20,8 @@ message Task {
     int64 pid = 5;
     TaskStatus status = 6;
     int64 executed_at = 7;
+    uint64 mem_usage = 8;
+    uint32 num_threads = 9;
 }
 
 message InvokeTaskRequest {
@@ -44,7 +46,8 @@ message StopTaskRequest {
 
 message StopTaskResponse {
   bool stopped = 1;
-  string detail = 2;
+  string via = 2;
+  Task task = 3;
 }
 
 service TaskService {

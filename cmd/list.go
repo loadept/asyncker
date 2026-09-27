@@ -42,17 +42,19 @@ var listCmd = &cobra.Command{
 
 		if format == "" {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 5, ' ', 0)
-			fmt.Fprintln(w, "Name\tPID\tCmdLine\tStatus\tExecutedAt")
-			for _, t := range tasks {
+			fmt.Fprintln(w, "Name\tPID\tCmdLine\tStatus\tUptime\tMemUsage\tNumThreads")
+			for _, task := range tasks {
 				fmt.Fprintf(
 					w,
-					"%s\t%d\t%s %s\t%s\t%s\n",
-					t.GetName(),
-					t.GetPid(),
-					t.GetCommand(),
-					strings.Join(t.GetArgs(), " "),
-					t.GetStatus(),
-					time.Unix(t.GetExecutedAt(), 0).Format("2006-01-02 15:04:05"),
+					"%s\t%d\t%s %s\t%s\t%s\t%s\t%d\n",
+					task.GetName(),
+					task.GetPid(),
+					task.GetCommand(),
+					strings.Join(task.GetArgs(), " "),
+					task.GetStatus(),
+					time.Since(time.Unix(task.GetExecutedAt(), 0)).String(),
+					fmt.Sprintf("%.2fmb", float64(task.GetMemUsage())/(1024*1024)),
+					task.GetNumThreads(),
 				)
 			}
 			w.Flush()
@@ -61,8 +63,8 @@ var listCmd = &cobra.Command{
 
 		switch format {
 		case "json":
-			for _, t := range tasks {
-				out, err := protojson.Marshal(t)
+			for _, task := range tasks {
+				out, err := protojson.Marshal(task)
 				if err != nil {
 					return fmt.Errorf("formating tasks: %w", err)
 				}

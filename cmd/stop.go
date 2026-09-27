@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -33,12 +35,25 @@ var stopCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		message, err := client.StopTask(ctx, taskName)
+		via, task, err := client.StopTask(ctx, taskName)
 		if err != nil {
 			return fmt.Errorf("stop task: %w", err)
 		}
 
-		fmt.Println("Stopping task:", message)
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 5, ' ', 0)
+		defer w.Flush()
+
+		fmt.Fprintln(w, "Task stopped successfully via", via)
+		fmt.Fprintln(w, "Name\tPID\tCmdLine\tStatus")
+		fmt.Fprintf(
+			w,
+			"%s\t%d\t%s %s\t%s\n",
+			task.GetName(),
+			task.GetPid(),
+			task.GetCommand(),
+			strings.Join(task.GetArgs(), " "),
+			task.GetStatus(),
+		)
 		return nil
 	},
 }
