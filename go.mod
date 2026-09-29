@@ -1,4 +1,4 @@
-module loadept.com/pkg/asyncker
+module loadept.com/go/asyncker
 
 go 1.27.0
 

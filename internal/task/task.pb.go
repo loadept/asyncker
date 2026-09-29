@@ -597,7 +597,7 @@ const file_task_proto_rawDesc = "" +
 	"InvokeTask\x12\x17.task.InvokeTaskRequest\x1a\x18.task.InvokeTaskResponse\x12<\n" +
 	"\tListTasks\x12\x16.google.protobuf.Empty\x1a\x17.task.ListTasksResponse\x129\n" +
 	"\bStopTask\x12\x15.task.StopTaskRequest\x1a\x16.task.StopTaskResponse\x129\n" +
-	"\bLogsTask\x12\x15.task.LogsTaskRequest\x1a\x16.task.LogsTaskResponseB(Z&loadept.com/pkg/asyncker/internal/taskb\x06proto3"
+	"\bLogsTask\x12\x15.task.LogsTaskRequest\x1a\x16.task.LogsTaskResponseB'Z%loadept.com/go/asyncker/internal/taskb\x06proto3"
 
 var (
 	file_task_proto_rawDescOnce sync.Once

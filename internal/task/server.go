@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"loadept.com/pkg/asyncker/internal/namegenerator"
+	"loadept.com/go/asyncker/internal/namegenerator"
 )
 
 const killTermTimeout = 10 * time.Second

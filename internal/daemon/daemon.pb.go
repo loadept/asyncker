@@ -94,7 +94,7 @@ const file_daemon_proto_rawDesc = "" +
 	"\rDaemonService\x12<\n" +
 	"\n" +
 	"StopDaemon\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\x12>\n" +
-	"\fDaemonStatus\x12\x16.google.protobuf.Empty\x1a\x16.daemon.StatusResponseB*Z(loadept.com/pkg/asyncker/internal/daemonb\x06proto3"
+	"\fDaemonStatus\x12\x16.google.protobuf.Empty\x1a\x16.daemon.StatusResponseB)Z'loadept.com/go/asyncker/internal/daemonb\x06proto3"
 
 var (
 	file_daemon_proto_rawDescOnce sync.Once

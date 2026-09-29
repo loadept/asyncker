@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"loadept.com/pkg/asyncker/internal/task"
+	"loadept.com/go/asyncker/internal/task"
 )
 
 var name string

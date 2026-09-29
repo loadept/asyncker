@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"loadept.com/pkg/asyncker/cmd"
+	"loadept.com/go/asyncker/cmd"
 )
 
 func main() {

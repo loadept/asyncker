@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
-	"loadept.com/pkg/asyncker/internal/task"
+	"loadept.com/go/asyncker/internal/task"
 )
 
 var format string

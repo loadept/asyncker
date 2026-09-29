@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package daemon;
 
-option go_package = "loadept.com/pkg/asyncker/internal/daemon";
+option go_package = "loadept.com/go/asyncker/internal/daemon";
 
 import "google/protobuf/empty.proto";
 

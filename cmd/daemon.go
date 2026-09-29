@@ -12,8 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"loadept.com/pkg/asyncker/internal/daemon"
-	"loadept.com/pkg/asyncker/internal/task"
+	"loadept.com/go/asyncker/internal/daemon"
+	"loadept.com/go/asyncker/internal/task"
 )
 
 var up, down, status bool

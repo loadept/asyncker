@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package task;
 
-option go_package = "loadept.com/pkg/asyncker/internal/task";
+option go_package = "loadept.com/go/asyncker/internal/task";
 
 import "google/protobuf/empty.proto";
 
