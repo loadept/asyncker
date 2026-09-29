@@ -17,8 +17,8 @@ import (
 var format string
 
 var listCmd = &cobra.Command{
-	Use:   "list [flags]",
-	Short: "List registered tasks",
+	Use:   "status [flags]",
+	Short: "Shows tasks statuses",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
@@ -82,5 +82,5 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	listCmd.Flags().StringVar(&format, "format", "", "List executed tasks")
+	listCmd.Flags().StringVar(&format, "format", "", "Format output")
 }

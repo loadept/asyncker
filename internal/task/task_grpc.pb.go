@@ -23,6 +23,7 @@ const (
 	TaskService_InvokeTask_FullMethodName = "/task.TaskService/InvokeTask"
 	TaskService_ListTasks_FullMethodName  = "/task.TaskService/ListTasks"
 	TaskService_StopTask_FullMethodName   = "/task.TaskService/StopTask"
+	TaskService_LogsTask_FullMethodName   = "/task.TaskService/LogsTask"
 )
 
 // TaskServiceClient is the client API for TaskService service.
@@ -32,6 +33,7 @@ type TaskServiceClient interface {
 	InvokeTask(ctx context.Context, in *InvokeTaskRequest, opts ...grpc.CallOption) (*InvokeTaskResponse, error)
 	ListTasks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListTasksResponse, error)
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
+	LogsTask(ctx context.Context, in *LogsTaskRequest, opts ...grpc.CallOption) (*LogsTaskResponse, error)
 }
 
 type taskServiceClient struct {
@@ -72,6 +74,16 @@ func (c *taskServiceClient) StopTask(ctx context.Context, in *StopTaskRequest, o
 	return out, nil
 }
 
+func (c *taskServiceClient) LogsTask(ctx context.Context, in *LogsTaskRequest, opts ...grpc.CallOption) (*LogsTaskResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogsTaskResponse)
+	err := c.cc.Invoke(ctx, TaskService_LogsTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TaskServiceServer is the server API for TaskService service.
 // All implementations must embed UnimplementedTaskServiceServer
 // for forward compatibility.
@@ -79,6 +91,7 @@ type TaskServiceServer interface {
 	InvokeTask(context.Context, *InvokeTaskRequest) (*InvokeTaskResponse, error)
 	ListTasks(context.Context, *emptypb.Empty) (*ListTasksResponse, error)
 	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
+	LogsTask(context.Context, *LogsTaskRequest) (*LogsTaskResponse, error)
 	mustEmbedUnimplementedTaskServiceServer()
 }
 
@@ -97,6 +110,9 @@ func (UnimplementedTaskServiceServer) ListTasks(context.Context, *emptypb.Empty)
 }
 func (UnimplementedTaskServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
+}
+func (UnimplementedTaskServiceServer) LogsTask(context.Context, *LogsTaskRequest) (*LogsTaskResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LogsTask not implemented")
 }
 func (UnimplementedTaskServiceServer) mustEmbedUnimplementedTaskServiceServer() {}
 func (UnimplementedTaskServiceServer) testEmbeddedByValue()                     {}
@@ -173,6 +189,24 @@ func _TaskService_StopTask_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TaskService_LogsTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogsTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).LogsTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_LogsTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).LogsTask(ctx, req.(*LogsTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TaskService_ServiceDesc is the grpc.ServiceDesc for TaskService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -191,6 +225,10 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopTask",
 			Handler:    _TaskService_StopTask_Handler,
+		},
+		{
+			MethodName: "LogsTask",
+			Handler:    _TaskService_LogsTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

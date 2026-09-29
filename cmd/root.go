@@ -40,6 +40,7 @@ func init() {
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(stopCmd)
+	rootCmd.AddCommand(logsCmd)
 }
 
 func initConfig() {

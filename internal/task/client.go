@@ -93,3 +93,13 @@ func (c *Client) StopTask(ctx context.Context, taskName string) (string, *Task, 
 
 	return resp.GetVia(), resp.GetTask(), nil
 }
+
+func (c *Client) LogsTask(ctx context.Context, taskName string) (string, string, error) {
+	in := &LogsTaskRequest{Name: taskName}
+	resp, err := c.remote.LogsTask(ctx, in)
+	if err != nil {
+		return "", "", err
+	}
+
+	return resp.GetStdoutPath(), resp.GetStderrPath(), nil
+}

@@ -80,6 +80,6 @@ var execCmd = &cobra.Command{
 
 func init() {
 	// execCmd.Flags().StringVarP(&output, "output", "o", "", "Redirects stdout and stderr to the specified file")
-	execCmd.Flags().StringVar(&name, "name", "", "Assign a name to the task")
+	execCmd.Flags().StringVarP(&name, "name", "n", "", "Assign a name to the task")
 	execCmd.Flags().SetInterspersed(false)
 }

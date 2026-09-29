@@ -198,7 +198,7 @@ func (s *TaskServer) ListTasks(ctx context.Context, _ *emptypb.Empty) (*ListTask
 }
 
 func (s *TaskServer) StopTask(ctx context.Context, req *StopTaskRequest) (*StopTaskResponse, error) {
-	taskName := req.Name
+	taskName := req.GetName()
 
 	s.mu.RLock()
 	task, ok := s.tasks[taskName]
@@ -233,6 +233,24 @@ func (s *TaskServer) StopTask(ctx context.Context, req *StopTaskRequest) (*StopT
 		Stopped: true,
 		Via:     syscall.SIGTERM.String(),
 		Task:    task,
+	}, nil
+}
+
+func (s *TaskServer) LogsTask(ctx context.Context, req *LogsTaskRequest) (*LogsTaskResponse, error) {
+	taskName := req.GetName()
+
+	s.mu.RLock()
+	if _, ok := s.tasks[taskName]; !ok {
+		return nil, status.Errorf(codes.NotFound, "task %s not found", taskName)
+	}
+	s.mu.RUnlock()
+
+	outLogs := filepath.Join(s.logsPath, fmt.Sprintf("%s_out.log", taskName))
+	errLogs := filepath.Join(s.logsPath, fmt.Sprintf("%s_err.log", taskName))
+
+	return &LogsTaskResponse{
+		StdoutPath: outLogs,
+		StderrPath: errLogs,
 	}, nil
 }
 

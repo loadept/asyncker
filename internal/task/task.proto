@@ -41,17 +41,27 @@ message ListTasksResponse {
 }
 
 message StopTaskRequest {
-  string name = 1;
+    string name = 1;
 }
 
 message StopTaskResponse {
-  bool stopped = 1;
-  string via = 2;
-  Task task = 3;
+    bool stopped = 1;
+    string via = 2;
+    Task task = 3;
+}
+
+message LogsTaskRequest {
+    string name = 1;
+}
+
+message LogsTaskResponse {
+    string stdout_path = 1;
+    string stderr_path = 2;
 }
 
 service TaskService {
     rpc InvokeTask (InvokeTaskRequest) returns (InvokeTaskResponse);
     rpc ListTasks (google.protobuf.Empty) returns (ListTasksResponse);
     rpc StopTask (StopTaskRequest) returns (StopTaskResponse);
+    rpc LogsTask (LogsTaskRequest) returns (LogsTaskResponse);
 }
